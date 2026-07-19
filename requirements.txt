@@ -1,0 +1,23 @@
+# ─── Core ML ────────────────────────────────────────────────────────────────
+torch
+ultralytics
+facenet-pytorch
+opencv-python-headless
+
+# ─── API Framework ──────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# ─── Data Validation ────────────────────────────────────────────────────────
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+
+# ─── Utilities ──────────────────────────────────────────────────────────────
+python-multipart
+numpy
+Pillow
+python-dotenv
+requests
+
+# ─── Monitoring & Logging ───────────────────────────────────────────────────
+loguru

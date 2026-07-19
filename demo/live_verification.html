@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AegisAuth | Live Attendance</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        header {
+            width: 100%;
+            padding: 20px 40px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(to right, #2dd4bf, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .main-content {
+            display: flex;
+            gap: 30px;
+            margin-top: 40px;
+            width: 90%;
+            max-width: 1200px;
+        }
+        .camera-section {
+            flex: 2;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        video {
+            width: 100%;
+            display: block;
+            /* Transform removed to align bounding boxes easily. For mirror, you have to invert X coords. 
+               We will keep it un-mirrored for accurate API box mapping. */
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let clicks pass through if needed */
+        }
+        .dashboard {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-verified { color: #22c55e; }
+        .status-unregistered { color: #f59e0b; }
+        .status-spoof { color: #ef4444; }
+        
+        .recent-scan {
+            font-size: 32px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        .liveness-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.1);
+        }
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        .pulse {
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #22c55e;
+            animation: pulse 1.5s infinite;
+        }
+        .pulse.offline {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">AegisAuth Live</div>
+    <div class="system-status">
+        <div class="pulse" id="connectionPulse"></div>
+        <span id="connectionText">API Connected</span>
+    </div>
+</header>
+
+<div class="main-content">
+    <div class="camera-section">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="overlay"></canvas>
+    </div>
+    
+    <div class="dashboard">
+        <div class="card">
+            <h2>Current Subject</h2>
+            <div class="recent-scan" id="identityLabel">Scanning...</div>
+            <div class="liveness-badge" id="livenessBadge">Liveness: N/A</div>
+        </div>
+        
+        <div class="card" style="flex:1;">
+            <h2>System Logs</h2>
+            <div id="logs" style="font-size: 13px; color: #94a3b8; font-family: monospace; max-height: 200px; overflow-y: auto;">
+                > System initialized.<br>
+                > Camera feed active.<br>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+    
+    const identityLabel = document.getElementById('identityLabel');
+    const livenessBadge = document.getElementById('livenessBadge');
+    const connectionPulse = document.getElementById('connectionPulse');
+    const connectionText = document.getElementById('connectionText');
+    const logs = document.getElementById('logs');
+
+    let isProcessing = false;
+
+    function addLog(msg) {
+        logs.innerHTML += `> ${msg}<br>`;
+        logs.scrollTop = logs.scrollHeight;
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
+        .then(stream => {
+            video.srcObject = stream;
+            // Wait for video to load metadata to size the canvas correctly
+            video.onloadedmetadata = () => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                setInterval(processFrame, 500); // 2 FPS to prevent overwhelming local API
+            };
+        })
+        .catch(err => {
+            addLog("Error: Could not access camera.");
+            console.error(err);
+        });
+
+    async function processFrame() {
+        if (isProcessing) return; // Wait for previous frame to finish
+        isProcessing = true;
+
+        // Hidden canvas to extract image blob
+        const offscreen = document.createElement('canvas');
+        offscreen.width = video.videoWidth;
+        offscreen.height = video.videoHeight;
+        const offCtx = offscreen.getContext('2d');
+        offCtx.drawImage(video, 0, 0, offscreen.width, offscreen.height);
+
+        offscreen.toBlob(async (blob) => {
+            if (!blob) {
+                isProcessing = false;
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", blob, "frame.jpg");
+
+            try {
+                const response = await fetch("http://localhost:8000/verify", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    connectionPulse.className = "pulse";
+                    connectionText.innerText = "API Connected";
+                    
+                    const data = await response.json();
+                    drawResults(data.faces);
+                } else {
+                    throw new Error("API returned " + response.status);
+                }
+            } catch (error) {
+                connectionPulse.className = "pulse offline";
+                connectionText.innerText = "API Offline";
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // clear boxes
+            } finally {
+                isProcessing = false;
+            }
+        }, 'image/jpeg', 0.8);
+    }
+
+    function drawResults(faces) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (!faces || faces.length === 0) {
+            identityLabel.innerText = "No Face Detected";
+            identityLabel.className = "recent-scan";
+            livenessBadge.innerText = "Liveness: N/A";
+            livenessBadge.style.color = "#94a3b8";
+            return;
+        }
+
+        faces.forEach(face => {
+            const { x1, y1, x2, y2 } = face.bounding_box;
+            const status = face.status;
+            const liveness = face.liveness_score;
+            const identity = face.identity;
+
+            let color = "#3b82f6"; // default blue
+            if (status === "Verified") {
+                color = "#22c55e"; // green
+                identityLabel.className = "recent-scan status-verified";
+                identityLabel.innerText = identity;
+            } else if (status === "Unregistered") {
+                color = "#f59e0b"; // orange
+                identityLabel.className = "recent-scan status-unregistered";
+                identityLabel.innerText = "Unknown Person";
+            } else {
+                color = "#ef4444"; // red
+                identityLabel.className = "recent-scan status-spoof";
+                identityLabel.innerText = "SPOOF DETECTED";
+            }
+
+            livenessBadge.innerText = `Liveness Score: ${(liveness * 100).toFixed(1)}%`;
+            livenessBadge.style.color = color;
+
+            // Draw bounding box
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.roundRect(x1, y1, x2 - x1, y2 - y1, 10);
+            ctx.stroke();
+            
+            // Draw label background
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(x1, y1 - 30, x2 - x1, 30, [10, 10, 0, 0]);
+            ctx.fill();
+
+            // Draw text
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 16px Inter";
+            ctx.fillText(`${status === 'Verified' ? identity : status}`, x1 + 10, y1 - 10);
+        });
+    }
+</script>
+</body>
+</html>

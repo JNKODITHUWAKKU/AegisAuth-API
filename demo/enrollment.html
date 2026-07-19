@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AegisAuth | Student Enrollment</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        h1 {
+            font-weight: 600;
+            margin-top: 0;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            aspect-ratio: 4/3;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        input[type="text"] {
+            width: calc(100% - 30px);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+        button {
+            background: linear-gradient(to right, #3b82f6, #6366f1);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
+        }
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 8px;
+            margin-top: 20px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #38bdf8;
+            transition: width 0.3s ease;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #cbd5e1;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AegisAuth Enrollment</h1>
+    <p class="subtitle">Secure Biometric Registration</p>
+
+    <div class="video-container">
+        <video id="video" autoplay playsinline></video>
+    </div>
+
+    <input type="text" id="student_id" placeholder="Enter Student ID (e.g., NIBM_001)">
+    <button id="enrollBtn" onclick="startEnrollment()">Start Enrollment</button>
+    
+    <div class="progress-bar-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div id="status">Waiting for camera...</div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const enrollBtn = document.getElementById('enrollBtn');
+    const studentIdInput = document.getElementById('student_id');
+    const statusDiv = document.getElementById('status');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    
+    let frames = [];
+    const ENROLL_ANGLES = 30;
+
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+            statusDiv.innerText = "Camera ready.";
+        })
+        .catch(err => {
+            console.error("Camera error:", err);
+            statusDiv.innerText = "Error accessing camera.";
+            statusDiv.style.color = "#ef4444";
+        });
+
+    function captureFrame() {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        return new Promise(resolve => {
+            canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.9);
+        });
+    }
+
+    async function startEnrollment() {
+        const studentId = studentIdInput.value.trim();
+        if (!studentId) {
+            statusDiv.innerText = "Please enter a valid Student ID.";
+            statusDiv.style.color = "#ef4444";
+            return;
+        }
+
+        enrollBtn.disabled = true;
+        studentIdInput.disabled = true;
+        progressContainer.style.display = "block";
+        statusDiv.style.color = "#cbd5e1";
+        frames = [];
+
+        statusDiv.innerText = "Capturing angles. Please move your head slightly...";
+
+        for (let i = 0; i < ENROLL_ANGLES; i++) {
+            const blob = await captureFrame();
+            frames.push(blob);
+            progressBar.style.width = `${((i + 1) / ENROLL_ANGLES) * 100}%`;
+            // wait ~150ms between frames to mimic the python script
+            await new Promise(r => setTimeout(r, 150)); 
+        }
+
+        statusDiv.innerText = "Securely syncing identity vectors...";
+        
+        const formData = new FormData();
+        formData.append("student_id", studentId);
+        frames.forEach((blob, i) => {
+            formData.append("files", blob, `frame_${i}.jpg`);
+        });
+
+        try {
+            const response = await fetch("http://localhost:8000/enroll", {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                statusDiv.innerText = `Success! Enrolled ${data.student_id} with ${data.anchors_saved} anchors.`;
+                statusDiv.style.color = "#22c55e"; // green
+            } else {
+                const err = await response.json();
+                statusDiv.innerText = `Error: ${err.detail || 'Failed to enroll'}`;
+                statusDiv.style.color = "#ef4444";
+            }
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerText = "CRITICAL: Could not connect to API server.";
+            statusDiv.style.color = "#ef4444";
+        } finally {
+            enrollBtn.disabled = false;
+            studentIdInput.disabled = false;
+            enrollBtn.innerText = "Re-enroll";
+        }
+    }
+</script>
+</body>
+</html>

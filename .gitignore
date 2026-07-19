@@ -1,0 +1,55 @@
+# Environments
+venv/
+env/
+.env
+.venv/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Mac OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Logs and databases
+*.log
+*.sqlite
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Project specific
+*.pt
+*.tex
+*.pdf
+
+# Ignore the vector database file to protect privacy
+*.pkl
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+__pypackages__/
