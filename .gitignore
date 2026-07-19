@@ -34,7 +34,6 @@ __pycache__/
 # Project specific
 *.pt
 *.tex
-*.pdf
 
 # Ignore the vector database file to protect privacy
 *.pkl
