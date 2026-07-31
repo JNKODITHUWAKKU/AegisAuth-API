@@ -3,10 +3,14 @@ from ultralytics import YOLO
 
 def train_anti_overfit_model():
     print("\n[SYSTEM] Initializing Liveness Engine with Anti-Overfitting Protocols...")
-    model = YOLO('yolov8s.pt')
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    data_path = "/content/face-anti-spoofing-detection-2" if os.path.exists("/content") else "./face-anti-spoofing-detection-2"
+    models_dir = os.path.join(os.path.dirname(script_dir), 'models')
+    base_model_path = os.path.join(models_dir, 'yolov8s.pt')
+    
+    model = YOLO(base_model_path)
+    
+    data_path = "/anti-spoofing-dataset"
     
     training_args = {
         'data': f"{data_path}/data.yaml",
@@ -21,12 +25,12 @@ def train_anti_overfit_model():
         'erasing': 0.4,            
         'imgsz': 640,              
         'mixup': 0.0,              
-        'project': os.path.join(script_dir, 'LecAttend_AI'),
+        'project': os.path.join(os.path.dirname(script_dir), 'models'),
         'name': 'liveness_engine'
     }
 
     model.train(**training_args)
-    print("\n[SYSTEM] Optimal weights saved to LecAttend_AI/liveness_engine/weights/best.pt")
+    print("\n[SYSTEM] Optimal weights saved to models/liveness_engine/weights/best.pt")
 
 if __name__ == '__main__':
     train_anti_overfit_model()
