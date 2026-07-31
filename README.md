@@ -285,6 +285,18 @@ python main.py
 ```
 *The API will start running on `http://0.0.0.0:8000`.*
 
+
+```bash
+# 1. Obtain data for retraining
+dvc repro
+
+# 2. Retrain the custom model
+python train/train_liveness.py
+
+# Send best model to production
+!python scripts/pull_production_model.py
+```
+
 ### 3. Test the Application
 Open a new terminal and run the provided OpenCV client scripts to test the API via your webcam:
 ```bash
@@ -294,6 +306,7 @@ python demo/enrollment.py
 # Run real-time anti-spoofing and verification
 python demo/live_verification.py
 ```
+
 
 <br><br>
 
