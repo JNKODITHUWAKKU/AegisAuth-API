@@ -5,6 +5,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.routers import enroll, verify
+from loguru import logger
+
+# Setup production logging for Model Monitoring (MLOps)
+os.makedirs("logs", exist_ok=True)
+logger.add("logs/production.log", rotation="10 MB", enqueue=True, format="{time} | {level} | {message}")
 
 app = FastAPI(
     title="AegisAuth API",

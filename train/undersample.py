@@ -3,7 +3,7 @@ import random
 import shutil
 
 def undersample():
-    base_dir = "/content/face-anti-spoofing-detection-2" if os.path.exists("/content") else "./face-anti-spoofing-detection-2"
+    base_dir = "./anti-spoofing-dataset"
     print("\n[SYSTEM] Balancing dataset natively to remove majority class bias...")
     splits = ['train', 'valid', 'test']
     

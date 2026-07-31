@@ -53,3 +53,12 @@ develop-eggs/
 lib/
 lib64/
 __pypackages__/
+/models
+
+# MLOps Specifics
+mlruns.db
+mlruns/
+runs/
+anti-spoofing-dataset/
+.pytest_cache/
+database/

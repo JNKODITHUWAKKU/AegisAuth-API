@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup DVC
+        uses: iterative/setup-dvc@v1
+        
+      # Note: For full CI, you would dvc pull here if remote storage was configured,
+      # but we skip it here as it requires cloud credentials.
+      # - name: Pull DVC models
+      #   run: dvc pull
+
+      - name: Run Tests
+        run: |
+          pytest tests/
+
+  build-docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t aegisauth-api:latest .

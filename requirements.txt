@@ -21,3 +21,7 @@ requests
 
 # ─── Monitoring & Logging ───────────────────────────────────────────────────
 loguru
+mlflow
+dvc
+pytest
+httpx

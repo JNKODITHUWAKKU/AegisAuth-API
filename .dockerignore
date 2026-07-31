@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.dvc/
+.dvc/cache
+database/identities/*.pkl
+tests/test_db/
+mlruns/
+mlruns.db

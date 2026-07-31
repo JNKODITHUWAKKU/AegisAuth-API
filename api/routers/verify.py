@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import torch
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from loguru import logger
 
 from api.services import (
     process_image_file, load_database, yolo_model, facenet_model, anti_spoof,
@@ -54,6 +55,9 @@ async def verify_identity(file: UploadFile = File(..., description="Image to ver
                         else:
                             status = "Unregistered"
                             
+            # -- MLOps Model Monitoring: Log inference telemetry --
+            logger.info(f"Verification Request | Status: {status} | Liveness: {liveness_score:.4f} | Identity: {name}")
+
             faces_detected.append({
                 "bounding_box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
                 "liveness_score": round(liveness_score, 4),

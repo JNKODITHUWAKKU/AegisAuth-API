@@ -1,0 +1,8 @@
+stages:
+  build_dataset:
+    cmd: python train/get_dataset.py && python train/undersample.py
+    deps:
+      - train/get_dataset.py
+      - train/undersample.py
+    outs:
+      - anti-spoofing-dataset/

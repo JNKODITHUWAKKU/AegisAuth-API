@@ -25,11 +25,19 @@ elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
     device = torch.device('mps')
 else:
     device = torch.device('cpu')
+    
 YOLO_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "yolov8n-face.pt")
 LIVENESS_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "liveness_engine", "weights", "best.pt")
-yolo_model = YOLO(YOLO_MODEL_PATH)
-facenet_model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
-anti_spoof = LivenessDetection(model_path=LIVENESS_MODEL_PATH)
+
+if os.getenv("TESTING") == "True":
+    # Skip heavy model loading during CI/CD to prevent crashes when DVC models aren't pulled
+    yolo_model = None
+    facenet_model = None
+    anti_spoof = None
+else:
+    yolo_model = YOLO(YOLO_MODEL_PATH)
+    facenet_model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+    anti_spoof = LivenessDetection(model_path=LIVENESS_MODEL_PATH)
 
 def load_database():
     known_encodings, known_names = [], []
