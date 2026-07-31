@@ -255,9 +255,9 @@ aegisauth-api/
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
-### 1. The Modern Way (Docker)
+### 1. With Docker
 The easiest way to run the API without installing complex ML dependencies on your local machine:
 ```bash
 # Build the stateless image
@@ -267,7 +267,7 @@ docker build -t aegisauth-api:latest .
 docker run -p 8000:8000 aegisauth-api:latest
 ```
 
-### 2. The Developer Way (Python)
+### 2. With Python (for Developers)
 If you want to actively develop or retrain the models:
 ```bash
 # 1. Clone & Setup Environment
