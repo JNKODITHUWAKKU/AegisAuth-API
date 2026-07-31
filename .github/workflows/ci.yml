@@ -37,7 +37,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          pytest tests/
+          PYTHONPATH=. pytest tests/
 
   build-docker:
     needs: test
