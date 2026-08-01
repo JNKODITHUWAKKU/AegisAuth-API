@@ -8,7 +8,7 @@
 
 **Next-Gen Biometric Intelligence powered by an Enterprise-Grade MLOps Architecture.** 
 
-AegisAuth is an advanced, stateless Deep Learning Face Verification and Anti-Spoofing microservice. Beyond just training an AI, this project demonstrates a complete, production-ready **Machine Learning Operations (MLOps)** lifecycle—featuring data versioning, automated model registries, statistical drift monitoring, and stateless containerized deployment.
+AegisAuth is an advanced, stateless Deep Learning Face Verification and Anti-Spoofing microservice. Beyond just training an AI, this project demonstrates a complete, production-ready **Machine Learning Operations (MLOps)** lifecycle featuring data versioning, automated model registries, statistical drift monitoring, and stateless containerized deployment.
 
 ---
 
@@ -311,4 +311,4 @@ python demo/live_verification.py
 <br><br>
 
 ---
-All Rights Reserved.
+Copyright © 2026 Janidu Kodithuwakku. All Rights Reserved.
